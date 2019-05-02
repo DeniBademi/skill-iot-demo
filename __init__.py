@@ -17,7 +17,9 @@
 
 # Mycroft libraries
 from os.path import dirname
-
+import json
+import urllib.request
+import ssl
 from adapt.intent import IntentBuilder
 from mycroft.skills.core import MycroftSkill
 from mycroft.util.log import getLogger
@@ -25,7 +27,7 @@ from mycroft.util.log import getLogger
 import requests
 
 
-__author__ = 'GregV','@lachendeKatze'
+__author__ = 'denibademi'
 
 LOGGER = getLogger(__name__)
 
@@ -34,48 +36,44 @@ class IotLampSkill(MycroftSkill):
 
     def __init__(self):
         super(IotLampSkill, self).__init__(name="IotLampSkill")
-	self.color_map = {'black': 0, 'white': 1, 'blue': 2, 'green': 3, 'orange': 4, 'red': 5, 'purple': 8, 'yellow': 9, 'pink': 10}	
+	self.index_map = {'black': 0, 'white': 1, 'blue': 2, 'green': 3, 'orange': 4, 'red': 5, 'purple': 8, 'yellow': 9, 'pink': 10}	
 
 
     def initialize(self):
 	self.load_data_files(dirname(__file__))
 
-        lamp_command_intent = IntentBuilder("LampCommandIntent").require("LampKeyword").require("Action").build()
+    lamp_command_intent = IntentBuilder("LampCommandIntent").require("LampKeyword").require("Action").build()
         self.register_intent(lamp_command_intent, self.handle_lamp_command_intent)
 
 	lamp_color_intent = IntentBuilder("LampColorIntent").require("LampColorKeyword").require("ColorName").build()
 	self.register_intent(lamp_color_intent, self.handle_lamp_color_intent)
 
-	feeder_intent = IntentBuilder("FishFeederIntent").require("Feeder").build()
-	self.register_intent(feeder_intent, self.handle_feeder_intent)
 
     def handle_lamp_command_intent(self, message):
         action_word = message.data.get("Action")
         LOGGER.info("Command word: " + action_word)
+        
         if action_word == "on":
-		self.speak_dialog("lamp.on")
-		r = requests.get('http://ip_here/lamp?cmd=1')
-	elif action_word == "off":
-		self.speak_dialog("lamp.off")
-		r = requests.get('http://ip_here/lamp?cmd=0')
+		  self.speak_dialog("lamp.on")
+		  requests.post('http://192.168.1.6/lamp1/on', data={"password":"sezam otvori se"})
+	       elif action_word == "off":
+		      self.speak_dialog("lamp.off")
+		      requests.post('http://192.168.1.6/lamp1/on', data={"password":"sezam otvori se"})
 	else:
 		self.speak("not sure about that")  	
 
     def handle_lamp_color_intent(self, message):	
-	lamp_color = message.data.get("ColorName")
-	LOGGER.info("Lamp Color: " + lamp_color)
-	if self.color_map.has_key(lamp_color):
-		self.speak_dialog("lamp.color",{"color": lamp_color})
-		color_index = self.color_map[lamp_color]
+	lamp_index = message.data.get("ColorName")
+	LOGGER.info("Lamp Color: " + lamp_index)
+	if self.index_map.has_key(lamp_index):
+		self.speak_dialog("lamp.color",{"color": lamp_index})
+		color_index = self.index_map[lamp_index]
 		r = requests.get('http://ip_here/color?color='+str(color_index))
 	else:
-		self.speak_dialog("lamp.color.error",{"color": lamp_color})
+		self.speak_dialog("lamp.color.error",{"color": lamp_index})
 
     
-    def handle_feeder_intent(self,message):
-        self.speak_dialog("feeder")
-	r = requests.get('http://ip_here/stepper')	
-
+    
     def stop(self):
         pass
 
