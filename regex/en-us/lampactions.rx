@@ -1,2 +1,1 @@
-(turn|switch) (?P<Action>on|off) (?P<DeviceName>.*)
-(change|make) (?P<Action>color|color to) (?P<ColorName>.*)
+(turn|switch) (?P<ColorName>.*) (?P<Action>on|off)
